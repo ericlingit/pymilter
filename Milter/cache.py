@@ -46,119 +46,123 @@
 # Copyright 2001,2002,2003,2004,2005 Business Management Systems, Inc.
 # This code is under the GNU General Public License.  See COPYING for details.
 
-from __future__ import print_function
 import time
+
 from Milter.plock import PLock
 
+
 class AddrCache(object):
-  time_format = '%Y%b%d %H:%M:%S %Z'
+    time_format = "%Y%b%d %H:%M:%S %Z"
 
-  def __init__(self,renew=7,fname=None):
-    self.age = renew
-    self.cache = {}
-    self.fname = fname
+    def __init__(self, renew=7, fname=None):
+        self.age = renew
+        self.cache = {}
+        self.fname = fname
 
-  def load(self,fname,age=0):
-    "Load address cache from persistent store."
-    if not age:
-      age = self.age
-    self.fname = fname
-    cache = {}
-    self.cache = cache
-    now = time.time()
-    lock = PLock(self.fname)
-    wfp = lock.lock()
-    changed = False
-    try:
-      too_old = now - age*24*60*60	# max age in days
-      try:
-        fp = open(self.fname)
-      except OSError:
-        fp = ()
-      for ln in fp:
+    def load(self, fname, age=0):
+        "Load address cache from persistent store."
+        if not age:
+            age = self.age
+        self.fname = fname
+        cache = {}
+        self.cache = cache
+        now = time.time()
+        lock = PLock(self.fname)
+        wfp = lock.lock()
+        changed = False
         try:
-          rcpt,ts = ln.strip().split(None,1)
-          try:
-            l = time.strptime(ts,AddrCache.time_format)
-            t = time.mktime(l)
-            if t < too_old:
-              changed = True
-              continue
-            cache[rcpt.lower()] = (t,None)
-          except:       # unparsable timestamp - likely garbage
-            changed = True
-            continue
-        except: # manual entry (no timestamp)
-          cache[ln.strip().lower()] = (now,None)
-        wfp.write(ln)
-      if changed:
-        lock.commit(self.fname+'.old')
-      else:
-        lock.unlock()
-    except IOError:
-      lock.unlock()
+            too_old = now - age * 24 * 60 * 60  # max age in days
+            try:
+                fp = open(self.fname)
+            except OSError:
+                fp = ()
+            for ln in fp:
+                try:
+                    rcpt, ts = ln.strip().split(None, 1)
+                    try:
+                        l = time.strptime(ts, AddrCache.time_format)
+                        t = time.mktime(l)
+                        if t < too_old:
+                            changed = True
+                            continue
+                        cache[rcpt.lower()] = (t, None)
+                    except:  # unparsable timestamp - likely garbage
+                        changed = True
+                        continue
+                except:  # manual entry (no timestamp)
+                    cache[ln.strip().lower()] = (now, None)
+                wfp.write(ln)
+            if changed:
+                lock.commit(self.fname + ".old")
+            else:
+                lock.unlock()
+        except IOError:
+            lock.unlock()
 
-  def has_precise_key(self,sender):
-    """True if precise sender is cached and has not expired.  Don't
-    try looking up wildcard entries.
-    """
-    try:
-      lsender = sender and sender.lower()
-      ts,res = self.cache[lsender]
-      too_old = time.time() - self.age*24*60*60	# max age in days
-      if not ts or ts > too_old:
-        return True
-      del self.cache[lsender]
-    except KeyError: pass
-    return False
+    def has_precise_key(self, sender):
+        """True if precise sender is cached and has not expired.  Don't
+        try looking up wildcard entries.
+        """
+        try:
+            lsender = sender and sender.lower()
+            ts, res = self.cache[lsender]
+            too_old = time.time() - self.age * 24 * 60 * 60  # max age in days
+            if not ts or ts > too_old:
+                return True
+            del self.cache[lsender]
+        except KeyError:
+            pass
+        return False
 
-  def has_key(self,sender):
-    "True if sender is cached and has not expired."
-    if self.has_precise_key(sender):
-      return True
-    try:
-      user,host = sender.split('@',1)
-      return self.has_precise_key(host)
-    except: pass
-    return False
+    def has_key(self, sender):
+        "True if sender is cached and has not expired."
+        if self.has_precise_key(sender):
+            return True
+        try:
+            user, host = sender.split("@", 1)
+            return self.has_precise_key(host)
+        except:
+            pass
+        return False
 
-  __contains__ = has_key
+    __contains__ = has_key
 
-  def __getitem__(self,sender):
-    try:
-      lsender = sender.lower()
-      ts,res = self.cache[lsender]
-      too_old = time.time() - self.age*24*60*60	# max age in days
-      if not ts or ts > too_old:
-        return res
-      del self.cache[lsender]
-      raise KeyError(sender)
-    except KeyError as x:
-      try:
-        user,host = sender.split('@',1)
-        return self.__getitem__(host)
-      except ValueError:
-        raise x
+    def __getitem__(self, sender):
+        try:
+            lsender = sender.lower()
+            ts, res = self.cache[lsender]
+            too_old = time.time() - self.age * 24 * 60 * 60  # max age in days
+            if not ts or ts > too_old:
+                return res
+            del self.cache[lsender]
+            raise KeyError(sender)
+        except KeyError as x:
+            try:
+                user, host = sender.split("@", 1)
+                return self.__getitem__(host)
+            except ValueError:
+                raise x
 
-  def addperm(self,sender,res=None):
-    "Add a permanent sender."
-    lsender = sender.lower()
-    if self.has_key(lsender):
-      ts,res = self.cache[lsender]
-      if not ts: return		# already permanent
-    self.cache[lsender] = (None,res)
-    if not res:
-      with open(self.fname,'a') as fp:
-        print(sender,file=fp)
-    
-  def __setitem__(self,sender,res):
-    lsender = sender.lower()
-    now = time.time()
-    self.cache[lsender] = (now,res)
-    if not res and self.fname:
-      s = time.strftime(AddrCache.time_format,time.localtime(now))
-      with open(self.fname,'a') as fp:
-        print(sender,s,file=fp) # log refreshed senders
+    def addperm(self, sender, res=None):
+        "Add a permanent sender."
+        lsender = sender.lower()
+        if self.has_key(lsender):
+            ts, res = self.cache[lsender]
+            if not ts:
+                return  # already permanent
+        self.cache[lsender] = (None, res)
+        if not res:
+            with open(self.fname, "a") as fp:
+                print(sender, file=fp)
 
-  def __len__(self):
-    return len(self.cache)
+    def __setitem__(self, sender, res):
+        lsender = sender.lower()
+        now = time.time()
+        self.cache[lsender] = (now, res)
+        if not res and self.fname:
+            s = time.strftime(AddrCache.time_format, time.localtime(now))
+            with open(self.fname, "a") as fp:
+                print(sender, s, file=fp)  # log refreshed senders
+
+    def __len__(self):
+        return len(self.cache)

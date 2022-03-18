@@ -7,11 +7,12 @@
 # except that we wish to extract some sort of fixed string from
 # the variable signature which represents the "source" of the message.
 
+
 def unsign(s):
-  """Attempt to unsign localpart and return original email.
-  No attempt is made to verify the signature.
-  >>> unsign('SRS0=8Y3CZ=3U=jsconnor.com=bills@bmsi.com')
-  'bills@jsconnor.com'
-  """
-  # not implemented yet
-  return s
+    """Attempt to unsign localpart and return original email.
+    No attempt is made to verify the signature.
+    >>> unsign('SRS0=8Y3CZ=3U=jsconnor.com=bills@bmsi.com')
+    'bills@jsconnor.com'
+    """
+    # not implemented yet
+    return s
