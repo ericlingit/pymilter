@@ -8,24 +8,19 @@
 # Copyright 2001,2009 Business Management Systems, Inc.
 # This code is under the GNU General Public License.  See COPYING for details.
 
-from __future__ import print_function
 __version__ = '1.0.5'
 
-import os
 import re
-import milter
 import sys
-try:
-  import thread
-except:
-  # libmilter uses posix threads
-  import _thread as thread
-
-from milter import *
 from functools import wraps
+from threading import Lock  # libmilter uses posix threads
 
-_seq_lock = thread.allocate_lock()
+import milter
+from milter import *
+
+_seq_lock = Lock()
 _seq = 0
+
 
 def uniqueID():
   """Return a unique sequence number (incremented on each call).
