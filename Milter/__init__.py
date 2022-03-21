@@ -802,7 +802,7 @@ class Milter(Base):
 
     def close(self):
         "Called at the end of connection, even if aborted."
-        print("close")
+        print("close\n")
         return CONTINUE
 
 
@@ -954,7 +954,7 @@ def runmilter(name, socketname, timeout=0, rmsock=True):
 
 
 __all__ = globals().copy()
-for priv in ("os", "milter", "thread", "factory", "_seq", "_seq_lock", "__version__"):
+for priv in ("milter", "factory", "_seq", "_seq_lock", "__version__"):
     del __all__[priv]
 __all__ = __all__.keys()
 
