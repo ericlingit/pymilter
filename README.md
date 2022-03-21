@@ -1,5 +1,5 @@
 Forked from [sdgathman/pymilter](https://github.com/sdgathman/pymilter).
-The contents of this readme has been modified to work with postmail.
+The contents of this readme has been modified to work with postfix.
 
 # Abstract
 
@@ -32,7 +32,7 @@ This part assumes a host running Ubuntu 20.04 64-bit.
 1. Install this module
     - `pip install pymilter`
     - or `python setup.py install`
-1. Configure postmail. Edit `/etc/postmail/main.cf` and add these lines:
+1. Configure postfix. Edit `/etc/postfix/main.cf` and add these lines:
     ```
     milter_default_action = tempfail
     milter_protocol = 6
@@ -52,7 +52,7 @@ This part assumes a host running Ubuntu 20.04 64-bit.
 1. Run sample.py. This starts a sample milter process and listens for requests at `localhost:9999`:
     - `python sample.py`
 
-Monitor postmail logs for errors: `less /var/log/mail.log`
+Monitor postfix logs for errors: `less /var/log/mail.log`
 
 That's it.  Incoming mail will cause the milter to print some things, and
 some email will be rejected (see the "header" method).  Edit and play.
