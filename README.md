@@ -9,8 +9,8 @@ Since it's a script, you can do anything you want to the message - screen
 out viruses, collect statistics, add or modify headers, etc.  You can, at
 any point, tell Sendmail to reject, discard, or accept the message.
 
-Additional python modules provide for navigating and modifying MIME parts, and
-sending DSNs or doing CBVs.
+Additional python modules provide for navigating and modifying MIME parts,
+and sending DSNs or doing CBVs.
 
 # Requirements
 
@@ -54,16 +54,14 @@ This part assumes a host running Ubuntu 20.04 64-bit.
 
 Monitor postfix logs for errors: `less /var/log/mail.log`
 
-That's it.  Incoming mail will cause the milter to print some things, and
-some email will be rejected (see the "header" method).  Edit and play.
-See spfmilter.py for a functional SPF milter, or see bms.py for an complex
-milter used in production.
+That's it. Incoming mail will cause the milter to print some things.
+Edit and play. See spfmilter.py for a functional SPF milter, or see bms.py for an complex milter used in production.
 
 
 # Authors
 
 Jim Niemira (urmane@urmane.org) wrote the original C module and some quick
-and dirty python to use it.  Stuart D. Gathman (stuart@gathman.org) took that
+and dirty python to use it. Stuart D. Gathman (stuart@gathman.org) took that
 kludge and added threading and context objects to it, wrote a proper OO
 wrapper (Milter.py) that handles attachments, did lots of testing, packaged
 it with distutils, and generally transformed it from a quick hack to a
